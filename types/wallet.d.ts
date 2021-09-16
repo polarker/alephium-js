@@ -1,18 +1,15 @@
 /// <reference types="node" />
 declare class Wallet {
-    seed: Buffer;
     address: string;
     publicKey: string;
     privateKey: string;
-    constructor(seed: Buffer, address: string, publicKey: string, privateKey: string);
+    seed: Buffer;
+    mnemonic: string;
+
+    constructor(address: string, publicKey: string, privateKey: string, seed: Buffer, mnemonic: string);
     encrypt(password: string): any;
 }
-declare function fromMnemonic(mnemonic: any, networkType: any): Wallet;
-declare function fromSeed(seed: any, networkType: any): Wallet;
-declare function walletGenerate(networkType: any): {
-    mnemonic: any;
-    wallet: Wallet;
-};
-declare function walletImport(seedPhrase: any, networkType: any): Wallet;
-declare function walletOpen(password: any, data: any, networkType: any): Promise<Wallet>;
-export { Wallet, walletGenerate as generate, walletImport as import, walletOpen as opan, fromMnemonic, fromSeed };
+declare function walletGenerate(): Wallet;
+declare function walletImport(mnemonic: string): Wallet;
+declare function walletOpen(password: string, data: string): Promise<Wallet>;
+export { Wallet, walletGenerate as generate, walletImport as import, walletOpen as opan };
