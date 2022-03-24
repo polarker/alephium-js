@@ -1,21 +1,24 @@
-// Copyright 2018 - 2021 The Alephium Authors
-// This file is part of the alephium project.
-//
-// The library is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// The library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with the library. If not, see <http://www.gnu.org/licenses/>.
+/*
+Copyright 2018 - 2022 The Alephium Authors
+This file is part of the alephium project.
+
+The library is free software: you can redistribute it and/or modify
+it under the terms of the GNU Lesser General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+The library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License
+along with the library. If not, see <http://www.gnu.org/licenses/>.
+*/
 
 import { ec as EC } from 'elliptic'
 
+import * as api from '../api/api-alephium'
 import { Api, SelfClique } from '../api/api-alephium'
 import { NodeClient } from './node'
 import * as utils from './utils'
@@ -56,6 +59,15 @@ export class CliqueClient extends Api<null> {
     }
   }
 
+  static convert<T>(response: api.HttpResponse<T, { detail: string }>): T {
+    if (response.error) {
+      console.log(response.error.detail)
+      throw new Error(response.error.detail)
+    } else {
+      return response.data
+    }
+  }
+
   async selfClique() {
     const res = await this.infos.getInfosSelfClique()
 
@@ -64,21 +76,14 @@ export class CliqueClient extends Api<null> {
     return res
   }
 
-  async getClientIndex(address: string) {
-    if (this.clients.length === 0) {
-      // This shouldn't happen as current user is in the clique
-      throw new Error('Unknown error (no nodes in the clique)')
-    }
-
-    const res = await this.addresses.getAddressesAddressGroup(address)
-
-    if (res.error) throw new Error(res.error.detail)
-
-    return res.data.group % this.clients.length
+  getClientIndex(address: string) {
+    if (this.clients.length === 0) throw new Error('No nodes in the clique')
+    const group = utils.groupOfAddress(address)
+    return group % this.clients.length
   }
 
   async getBalance(address: string) {
-    const clientIndex = await this.getClientIndex(address)
+    const clientIndex = this.getClientIndex(address)
     return await this.clients[clientIndex].getBalance(address)
   }
 
@@ -98,17 +103,17 @@ export class CliqueClient extends Api<null> {
     gas?: number,
     gasPrice?: string
   ) {
-    const clientIndex = await this.getClientIndex(fromAddress)
+    const clientIndex = this.getClientIndex(fromAddress)
     return await this.clients[clientIndex].transactionCreate(fromPublicKey, toAddress, amount, lockTime, gas, gasPrice)
   }
 
   async transactionConsolidateUTXOs(fromPublicKey: string, fromAddress: string, toAddress: string) {
-    const clientIndex = await this.getClientIndex(fromAddress)
+    const clientIndex = this.getClientIndex(fromAddress)
     return await this.clients[clientIndex].transactionConsolidateUTXOs(fromPublicKey, toAddress)
   }
 
   async transactionSend(fromAddress: string, tx: string, signature: string) {
-    const clientIndex = await this.getClientIndex(fromAddress)
+    const clientIndex = this.getClientIndex(fromAddress)
     return await this.clients[clientIndex].transactionSend(tx, signature)
   }
 

@@ -16,18 +16,17 @@ You should have received a copy of the GNU Lesser General Public License
 along with the library. If not, see <http://www.gnu.org/licenses/>.
 */
 
-import { Api } from '../api/api-explorer'
+const fs = require('fs')
+const process = require('process')
+const path = require('path')
 
-/**
- * Explorer client
- */
-
-export class ExplorerClient extends Api<null> {
-  async getAddressTransactions(address: string, page: number) {
-    return await this.addresses.getAddressesAddressTransactions(address, { page })
+const pidFile = process.cwd() + path.sep + 'dev' + path.sep + 'alephium.pid'
+try {
+  const pid = parseInt(fs.readFileSync(pidFile).toString())
+  if (pid) {
+    console.log(`Stopping the running devnet: ${pid}`)
+    process.kill(pid)
   }
-
-  async getAddressDetails(address: string) {
-    return await this.addresses.getAddressesAddress(address)
-  }
+} catch (e) {
+  console.log(`Error in stopping the running devnet: ${e}`)
 }
